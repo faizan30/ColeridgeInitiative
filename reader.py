@@ -17,8 +17,8 @@ class CsvReader(DatasetReader):
             tokenizer: None,
             token_indexers: None):
         super().__init__()
-        self.tokenizer = SpacyTokenizer()
-        self.token_indexers = token_indexers or {
+        self._tokenizer = SpacyTokenizer()
+        self._token_indexers = token_indexers or {
             'tokens': SingleIdTokenIndexer()}
 
     def read(self, file_path: str):
@@ -27,7 +27,7 @@ class CsvReader(DatasetReader):
         with open(file_path, 'r') as inp:
             reader = csv.reader(inp, delimiter=",")
             # max_instances = 10000000
-            max_instances = 1000
+            max_instances = 100
             if "test" in file_path:
                 max_instances = max_instances*0.1
             if "validation" in file_path:
@@ -64,14 +64,14 @@ class CsvReader(DatasetReader):
 
     def text_to_instance(self, text, clean_label='', section_title=''):
         fields = {}
-        tokens = self.tokenizer.tokenize(text)
-        text_field = TextField(tokens, self.token_indexers)
+        tokens = self._tokenizer.tokenize(text)
+        text_field = TextField(tokens, self._token_indexers)
 
         fields['tokens'] = text_field
         if section_title:
             pass
         if clean_label:
-            label_tokens = self.tokenizer.tokenize(clean_label)
+            label_tokens = self._tokenizer.tokenize(clean_label)
             label_tokens = [lt.text for lt in label_tokens]
             tokens = [token.text for token in tokens]
             matched_index = self.get_tag_index(tokens, label_tokens)
