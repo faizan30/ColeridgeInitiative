@@ -1,0 +1,68 @@
+{
+    "dataset_reader": {
+      "type": "data_reader",
+      "tokenizer": {
+        "type": "spacy"
+      },
+      "token_indexers": {
+        "tokens": {
+          "type": "pretrained_transformer_mismatched",
+          "model_name": "textattack/distilbert-base-cased-CoLA",
+          "max_length": 100
+        }
+      }
+    },
+    "train_data_path": ".data/coleridgeinitiative-show-us-the-data/train_split.csv",
+    "validation_data_path": ".data/coleridgeinitiative-show-us-the-data/validation_split.csv",
+    "test_data_path": ".data/coleridgeinitiative-show-us-the-data/test_split.csv",
+    "model": {
+      "type": "crf_tagger",
+      "calculate_span_f1": true,
+      "label_encoding": "BIO",
+      "text_field_embedder": {
+        "token_embedders": {
+          "tokens": {
+            "type": "pretrained_transformer_mismatched",
+            "model_name": "textattack/distilbert-base-cased-CoLA",
+            "train_parameters": false,
+            "last_layer_only": true,
+            "max_length": 100
+          }
+        }
+      },
+      "encoder": {
+        "type": "gru",
+        "input_size": 768,
+        "hidden_size": 200,
+        "num_layers": 2,
+        "dropout": 0.1,
+        "bidirectional": true
+      },
+      "regularizer": {
+        "regexes": [
+          [
+            "transitions$",
+            {
+              "type": "l2",
+              "alpha": 0.1
+            }
+          ]
+        ]
+      }
+    },
+    "trainer": {
+      "optimizer": {
+        "type": "adam"
+      },
+      "num_epochs": 100,
+      "patience": 10,
+      "cuda_device": -1
+    },
+    "data_loader": {
+      "batch_sampler": {
+        "type": "bucket",
+        "padding_noise": 0,
+        "batch_size": 32
+      }
+    }
+  }
