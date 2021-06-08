@@ -8,30 +8,31 @@ from allennlp.data.instance import Instance
 from allennlp.data.tokenizers import Tokenizer, SpacyTokenizer
 from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer, token_indexer
 import spacy
-
+from typing import Dict
 
 @DatasetReader.register('data_reader')
 class CsvReader(DatasetReader):
     def __init__(
             self,
-            tokenizer: None,
-            token_indexers: None):
+            tokenizer: Tokenizer= None,
+            token_indexers: Dict[str, TokenIndexer]= None):
         super().__init__()
-        self._tokenizer = SpacyTokenizer()
-        self._token_indexers = token_indexers or {
+        self.tokenizer = tokenizer or SpacyTokenizer()
+        self.token_indexers = token_indexers or {
             'tokens': SingleIdTokenIndexer()}
 
-    def read(self, file_path: str):
+    def _read(self, file_path: str):
         dir_name = "/".join(file_path.split("/")[:-1])+"/train/"
         new_examples = []
+        instances = []
         with open(file_path, 'r') as inp:
             reader = csv.reader(inp, delimiter=",")
             # max_instances = 10000000
             max_instances = 100
-            if "test" in file_path:
-                max_instances = max_instances*0.1
-            if "validation" in file_path:
-                max_instances = max_instances*0.2
+            # if "test" in file_path:
+            #     max_instances = max_instances*0.1
+            # if "validation" in file_path:
+            #     max_instances = max_instances*0.2
             for i, example in enumerate(reader):
                 if i>=max_instances:
                     break
@@ -53,7 +54,7 @@ class CsvReader(DatasetReader):
                                 example.extend(
                                     [content['section_title'], text])
                                 new_examples.extend([example])
-                                yield self.text_to_instance(text, clean_label)
+                                instances.append(self.text_to_instance(text, clean_label))
                                 print("Instances completed: %s\r" % i, end="")
                 except FileNotFoundError as _:
                     print(dir_name+paper_id+".json" + " not found")
@@ -61,20 +62,19 @@ class CsvReader(DatasetReader):
                 except ValueError as _:
                     print("spacy max length error: SKIP")
                     pass
-
+        return instances
     def text_to_instance(self, text, clean_label='', section_title=''):
         fields = {}
-        tokens = self._tokenizer.tokenize(text)
-        text_field = TextField(tokens, self._token_indexers)
-
-        fields['tokens'] = text_field
+        tokens = self.tokenizer.tokenize(text)
+        fields['tokens'] = TextField(tokens, self.token_indexers)
         if section_title:
+            print("WRONG")
             pass
         if clean_label:
-            label_tokens = self._tokenizer.tokenize(clean_label)
+            label_tokens = self.tokenizer.tokenize(clean_label)
             label_tokens = [lt.text for lt in label_tokens]
-            tokens = [token.text for token in tokens]
-            matched_index = self.get_tag_index(tokens, label_tokens)
+            tokens_text = [token.text for token in tokens]
+            matched_index = self.get_tag_index(tokens_text, label_tokens)
             tags = self.assign_tags(tokens, matched_index)
             fields['tags'] = SequenceLabelField(tags, fields['tokens'])
         return Instance(fields)
