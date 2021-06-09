@@ -13,3 +13,8 @@ python -m spacy download en
 
 # download NLTK data
 python -c "import nltk; nltk.download('punkt')"
+
+
+# download dataset
+kaggle competitions download -c coleridgeinitiative-show-us-the-data
+unzip  coleridgeinitiative-show-us-the-data.zip -d .data/
