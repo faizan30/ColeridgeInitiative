@@ -23,16 +23,17 @@ class CsvReader(DatasetReader):
 
     def _read(self, file_path: str):
         dir_name = "/".join(file_path.split("/")[:-1])+"/train/"
+        # max_instances = 10000000
+        max_instances = 100
+        if "test" in file_path:
+            max_instances = max_instances*0.1
+        if "validation" in file_path:
+            max_instances = max_instances*0.2
+
         new_examples = []
         instances = []
         with open(file_path, 'r') as inp:
             reader = csv.reader(inp, delimiter=",")
-            # max_instances = 10000000
-            max_instances = 100
-            # if "test" in file_path:
-            #     max_instances = max_instances*0.1
-            # if "validation" in file_path:
-            #     max_instances = max_instances*0.2
             for i, example in enumerate(reader):
                 if i>=max_instances:
                     break
